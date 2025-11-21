@@ -19,6 +19,9 @@ This README details methodologies, API interactions, execution workflows, and sy
 
 # 1. Pipeline 1 — Image-Based Yelp Query Generation
 
+<img width="495" height="1452" alt="Untitled diagram-2025-11-21-011725" src="https://github.com/user-attachments/assets/34972feb-6bdf-4be1-ba66-2d62329bd9e2" />
+
+
 File: Pipeline1.ipynb  
 Objective: Generate a single well-formed Yelp AI API query based on:
 - A user-provided image
@@ -70,6 +73,9 @@ The final natural-language query is ready to:
 ---
 
 # 2. Pipeline 2 — Multi-Agent Review Debate System
+
+<img width="1062" height="1494" alt="Untitled diagram-2025-11-21-011831" src="https://github.com/user-attachments/assets/46e00806-b37b-4c14-95e1-2bfa0db48ae6" />
+
 
 File: Pipeline2.ipynb  
 Objective: Accept a Yelp business URL and produce:
