@@ -14,8 +14,6 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { styles } from '../styles/styles';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
-
-// Import the reusable component
 import CustomButton from '../components/CustomButton';
 
 export default function AddPhoto() {
