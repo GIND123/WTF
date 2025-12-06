@@ -1,10 +1,11 @@
 # Pipeline2Backend.py
-# Parallel P/N + stronger judge prompt.
+# Parallel P/N + stronger judge prompt + global thread pool.
 
 import os
 import re
 import json
 import requests
+import threading
 from urllib.parse import urlparse
 from typing import Optional, Union, Any, Dict, List, Tuple
 from itertools import cycle
@@ -41,15 +42,21 @@ if not YELP_API_KEY:
 
 # Build one or more Gemini clients.
 GEMINI_KEYS = [k.strip() for k in GEMINI_API_KEYS_RAW.split(",") if k.strip()]
+
 if not GEMINI_KEYS:
     raise RuntimeError("No valid Gemini keys found after parsing")
 
 _GEMINI_CLIENTS = [genai.Client(api_key=k) for k in GEMINI_KEYS]
 _client_cycle = cycle(_GEMINI_CLIENTS)
+_client_lock = threading.Lock()
+
+# Global thread pool reused across requests (for Yelp + LLM calls)
+AGENT_POOL = ThreadPoolExecutor(max_workers=4)
 
 def _next_llm_client() -> genai.Client:
-    # Round-robin across keys/clients (thread-safe enough for this simple use).
-    return next(_client_cycle)
+    # Round-robin across keys/clients (thread-safe via lock).
+    with _client_lock:
+        return next(_client_cycle)
 
 YELP_BUSINESS_ENDPOINT = "https://api.yelp.com/v3/businesses/{business_id_or_alias}"
 YELP_REVIEWS_ENDPOINT  = "https://api.yelp.com/v3/businesses/{business_id_or_alias}/reviews"
@@ -140,7 +147,7 @@ def _yelp_headers():
 
 def run_agent(system_prompt: str, content: str) -> str:
     """
-    Calls Gemini. Uses round-robin client(s). Parallel-safe.
+    Calls Gemini. Uses round-robin client(s). Parallel-safe via lock.
     """
     llm_client = _next_llm_client()
     try:
@@ -273,7 +280,7 @@ def get_review_snippets_from_yelp_ai(business_name: str, city: str, state: str) 
     if r.status_code != 200:
         raise HTTPException(
             status_code=502,
-            detail=f"Yelp AI fallback failed ({r.status_code}): {r.text[:300]}"
+            detail=f"Yelp AI fallback failed ({r.status_code}): {r.text[:300]}",
         )
     return ((r.json() or {}).get("response") or {}).get("text", "") or ""
 
@@ -341,24 +348,25 @@ AI summary of typical positives/negatives:
 def run_multi_agent_debate(context: str) -> Tuple[List[str], List[str], List[str]]:
     """
     Runs Optimist and Critic in parallel threads, then Judge.
+    Uses a global thread pool to avoid per-request executor creation.
     """
-    with ThreadPoolExecutor(max_workers=2) as ex:
-        futures = {
-            ex.submit(run_agent, OPTIMIST_SYS, context): "P",
-            ex.submit(run_agent, CRITIC_SYS, context): "N",
-        }
+    # P and N in parallel
+    futures = {
+        AGENT_POOL.submit(run_agent, OPTIMIST_SYS, context): "P",
+        AGENT_POOL.submit(run_agent, CRITIC_SYS, context): "N",
+    }
 
-        P_raw = N_raw = ""
-        for fut in as_completed(futures):
-            label = futures[fut]
-            try:
-                val = fut.result()
-            except Exception as e:
-                val = ""
-            if label == "P":
-                P_raw = val
-            else:
-                N_raw = val
+    P_raw = N_raw = ""
+    for fut in as_completed(futures):
+        label = futures[fut]
+        try:
+            val = fut.result()
+        except Exception:
+            val = ""
+        if label == "P":
+            P_raw = val
+        else:
+            N_raw = val
 
     P = safe_points_parse(P_raw, min_items=3, max_items=6)
     N = safe_points_parse(N_raw, min_items=3, max_items=6)
@@ -375,7 +383,8 @@ Counts:
 positives={len(P)} negatives={len(N)}
 """.strip()
 
-    J_raw = run_agent(JUDGE_SYS, judge_input)
+    # Judge after P and N are ready (still via the shared pool)
+    J_raw = AGENT_POOL.submit(run_agent, JUDGE_SYS, judge_input).result()
     J = safe_points_parse(J_raw, min_items=2, max_items=4)
 
     return P, N, J
@@ -396,7 +405,7 @@ def root():
         "docs": "/docs",
         "health": "/health",
         "endpoint": "/analyze-business",
-        "body": "Send JSON {business_url: <url>} or raw text body with url"
+        "body": "Send JSON {business_url: <url>} or raw text body with url",
     }
 
 @app.get("/health")
@@ -419,17 +428,28 @@ def analyze_business(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    # 3) Fetch business details
+    # 3 + 4) Fetch business details and Fusion reviews in parallel
+    future_business = AGENT_POOL.submit(
+        get_business_details, business_id_or_alias, req.locale
+    )
+    future_reviews = AGENT_POOL.submit(
+        get_business_reviews_from_fusion,
+        business_id_or_alias,
+        req.reviews_limit,
+        req.locale,
+    )
+
+    # Business (hard fail)
     try:
-        business = get_business_details(business_id_or_alias, locale=req.locale)
+        business = future_business.result()
     except requests.HTTPError as e:
         raise HTTPException(status_code=502, detail=f"Business details fetch failed: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Business details fetch failed: {e}")
 
-    # 4) Try Fusion reviews (soft fail)
+    # Reviews (soft fail)
     try:
-        reviews = get_business_reviews_from_fusion(
-            business_id_or_alias, limit=req.reviews_limit, locale=req.locale
-        )
+        reviews = future_reviews.result()
     except Exception:
         reviews = []
 
@@ -439,21 +459,27 @@ def analyze_business(
         context = build_context_from_reviews(business, reviews)
     else:
         if not req.ai_fallback:
-            raise HTTPException(status_code=404, detail="Fusion reviews unavailable and ai_fallback=False")
+            raise HTTPException(
+                status_code=404,
+                detail="Fusion reviews unavailable and ai_fallback=False",
+            )
         loc = business.get("location") or {}
         ai_summary = get_review_snippets_from_yelp_ai(
             business.get("name", ""),
             loc.get("city", ""),
-            loc.get("state", "")
+            loc.get("state", ""),
         )
         context = build_context_from_ai_summary(business, ai_summary)
         context_source = "yelp_ai_summary"
 
-    # 6) Multi-agent debate (P/N parallel)
+    # 6) Multi-agent debate (P/N parallel, then J)
     try:
         P, N, J = run_multi_agent_debate(context)
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Gemini debate failed: {str(e)[:300]}")
+        raise HTTPException(
+            status_code=502,
+            detail=f"Gemini debate failed: {str(e)[:300]}",
+        )
 
     return {
         "business_id": business_id_or_alias,
@@ -467,4 +493,8 @@ def analyze_business(
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", "8000")))
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", "8000")),
+    )
