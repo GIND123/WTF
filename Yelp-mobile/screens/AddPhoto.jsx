@@ -10,6 +10,7 @@ import {
   Alert,
   Image,
   ScrollView,
+  Dimensions,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { styles } from '../styles/styles';
@@ -21,6 +22,8 @@ export default function AddPhoto() {
   const [description, setDescription] = useState('');
   const [image, setImage] = useState(null);
   const navigation = useNavigation();
+  const screenHeight = Dimensions.get('window').height;
+  const isSmallScreen = screenHeight < 700;
 
   const clickImage = async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
@@ -132,7 +135,7 @@ export default function AddPhoto() {
           </ScrollView>
 
           {/* Footer */}
-          <View>
+          <View style={isSmallScreen && { marginHorizontal: 12 }}>
             <CustomButton title="Next" variant="primary" onPress={() => onPressNext()} />
           </View>
         </View>

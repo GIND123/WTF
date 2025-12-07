@@ -1,49 +1,9 @@
 import React, { useState, useContext } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StatusBar,
-  TextInput,
-  Keyboard,
-  Image,
-} from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
-import { styles } from '../styles/styles';
+import { View, Text, TouchableOpacity, StatusBar, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import LoadingScreen from '../components/LoadingScreen';
 
 import { AppContext } from '../context/AppContext';
-
-import FoodCard from '../components/FoodCard';
-
-const FEED_DATA = [
-  {
-    id: 1,
-    restaurant: 'The Corner Bistro',
-    date: 'June 15, 2024',
-    time: '7:30 PM',
-    imageUri:
-      'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: 2,
-    restaurant: 'Fresh Catch Sushi',
-    date: 'June 12, 2024',
-    time: '1:00 PM',
-    imageUri:
-      'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: 3,
-    restaurant: 'Noodle House',
-    date: 'June 10, 2024',
-    time: '8:15 PM',
-    imageUri:
-      'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-  },
-];
 
 export default function Home() {
   const navigation = useNavigation();
@@ -118,7 +78,6 @@ export default function Home() {
           </Text>
         </TouchableOpacity>
 
-        {/* Food Images */}
         <View
           style={{
             flexDirection: 'row',
