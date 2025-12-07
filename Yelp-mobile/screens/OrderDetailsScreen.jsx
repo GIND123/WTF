@@ -47,7 +47,6 @@ export default function ScheduleOrderScreen({ route }) {
 
   const onChange = (event, selectedDate) => {
     const currentDate = selectedDate || date;
-    console.log(currentDate);
     setDate(currentDate);
 
     if (Platform.OS === 'android') {
@@ -126,7 +125,6 @@ export default function ScheduleOrderScreen({ route }) {
           }
         })
         .catch((error) => {
-          console.log('Reverse geocoding failed:', error);
           setLocation((prev) => ({
             ...prev,
             city: '',
@@ -162,7 +160,6 @@ export default function ScheduleOrderScreen({ route }) {
         date?.toString() || '',
         date?.toString() || ''
       );
-
       // Optional: Double check if businesses array exists
       if (!res.businesses || res.businesses.length === 0) {
         Alert.alert('No Results', 'We could not find any restaurants matching that description.');
