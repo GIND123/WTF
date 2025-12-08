@@ -201,11 +201,6 @@ For a selected Yelp business:
 - **Android APK:**  
   👉 *https://your-hosted-apk-link.com*
 
-- **TestFlight (iOS):**  
-  👉 *https://your-testflight-link.com*
-
-*(Replace links with your hosted URLs.)*
-
 ---
 
 ## Demonstration Video
