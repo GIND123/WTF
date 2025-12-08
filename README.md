@@ -3,6 +3,27 @@
 
 ---
 
+
+## Table of Contents
+
+- [Overview](#overview)
+- [How to Set-Up](#how-to-set-up)
+- [Core Features](#core-features)
+  - [📷 Food Image → Restaurant Search](#-food-image--restaurant-search-primary-yelp-ai-workflow)
+  - [🗺️ Contextual Planning](#%EF%B8%8F-contextual-planning)
+  - [🧠 Multi-Agent Dining Evaluation System](#-multi-agent-dining-evaluation-system)
+  - [📞 Action Layer](#-action-layer)
+  - [🛡️ Safety & Relevance Guardrails](#%EF%B8%8F-safety--relevance-guardrails)
+- [System Architecture](#system-architecture)
+- [Backend Pipelines](#backend-pipelines)
+  - [🔹 Pipeline 1 – Image to Yelp Discovery](#-pipeline-1--image-to-yelp-discovery)
+  - [🔹 Pipeline 2 – Multi-Agent Verdict System](#-pipeline-2--multi-agent-verdict-system)
+- [Compliance with Hackathon Rules](#compliance-with-hackathon-rules)
+- [Live App Builds](#live-app-builds)
+- [Demonstration Video](#demonstration-video)
+
+---
+
 ## Overview
 
 **WTF (Where’s The Food)** is a mobile-first application that helps users identify where they can find a dish they see online or in real life.  
