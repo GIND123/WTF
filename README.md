@@ -212,17 +212,4 @@ Includes:
 
 ---
 
-## Setup Instructions (Local)
 
-### Requirements
-- Python 3.10+
-- Gemini API Key (Google)
-- Yelp API Key + Yelp AI access
-
----
-
-### Backend Setup
-
-```bash
-git clone [https://github.com/your-username/WTF-WhereIsTheFood.git](https://github.com/GIND123/WTF/tree/main/Yelp-mobile)
-pip install -r requirements.txt
