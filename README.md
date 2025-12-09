@@ -20,7 +20,9 @@
   - [🔹 Pipeline 2 – Multi-Agent Verdict System](#-pipeline-2--multi-agent-verdict-system)
 - [Compliance with Hackathon Rules](#compliance-with-hackathon-rules)
 - [Live App Builds](#live-app-builds)
+- [App Screenshots](#app-screenshots)
 - [Demonstration Video](#demonstration-video)
+
 
 ---
 
@@ -200,6 +202,14 @@ For a selected Yelp business:
 
 - **Android APK:**  
   👉 *https://your-hosted-apk-link.com*
+
+---
+
+## App Screenshots 
+
+<img src="https://github.com/user-attachments/assets/37b5a10e-1164-4de9-87ed-84b230f91986" width="50%" height="50%">
+<img src="https://github.com/user-attachments/assets/2562ea56-91e5-4fb2-8e88-3b47504825ae" width="50%" height="50%">
+<img src="https://github.com/user-attachments/assets/e97f591c-37dc-49f6-8e5f-9d94b975e35a" width="50%" height="50%">
 
 ---
 
